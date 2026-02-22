@@ -1,27 +1,27 @@
-; GodBotScalper v2.0 - US30 M1 - 3.4 Contracts Optimised
+; GodBotScalper v2.0 - US30 M1 - 3.7 Contracts Optimised
 ; H1 Technical Summary (26 indicators) - Fixed Lot - No Martingale
 ;
 ; Backtest results (US30 M1, Feb 2025 - Feb 2026):
-;   Trades/Day : ~107      Avg Profit/Day : ~$787
-;   Annual     : ~$287K    PF             : 1.310
+;   Trades/Day : ~107      Avg Profit/Day : ~$856
+;   Annual     : ~$312K    PF             : 1.310
 ;   Sharpe     : 13.34     Sortino        : 122.6
-;   MaxDD $    : ~$3,379   (~3.4% of $100K sim)
+;   MaxDD $    : ~$3,678   (~3.7% of $100K sim)
 ;   Win Rate   : 24.3%     Avg Trade      : 9 min
 ;
 ; Combined with XAUUSD 0.14 lot (GodBotScalper_XAUUSD_M1_3pct.set):
-;   Total Daily : ~$1,200/day  ($413 XAUUSD + $787 US30)
-;   Total Annual: ~$438K
-;   Combined MaxDD: ~$5,874 (~5.9% of $100K)
+;   Total Daily : ~$1,269/day  ($413 XAUUSD + $856 US30)
+;   Total Annual: ~$463K
+;   Combined MaxDD: ~$6,173 (~6.2% of $100K)
 ;
 ; Optimisation notes:
-;   - 3.4 contracts (scaled from 4c to hit ~$3,350 MaxDD target)
+;   - 3.7 contracts (scaled from 4c baseline for ~$850/day target)
 ;   - Cooldown = 2 bars for 107 trades/day frequency
-;   - MaxDD scaled: $3,975 x (3.4/4) = $3,379
+;   - MaxDD scaled: $3,975 x (3.7/4) = $3,678
 ;
 ; Strategy:
 ;   Direction : H1 Technical Summary (investing.com, 26 indicators)
 ;               Score >= +7 -> BUY | Score <= -7 -> SELL
-;   Lot Size  : Fixed 3.4 lots/contracts (no martingale)
+;   Lot Size  : Fixed 3.7 lots/contracts (no martingale)
 ;   Cooldown  : 2 M1 bars (~2 min between entries -> ~107 trades/day)
 ;   Exit      : TP = 3.0x ATR | SL = 0.75x ATR
 ;
@@ -33,8 +33,8 @@ InpATRPeriod=21
 InpTP_ATR=3.0
 InpSL_ATR=0.75
 
-; Fixed 3.4 contracts - NO martingale
-InpBaseLot=3.4
+; Fixed 3.7 contracts - NO martingale
+InpBaseLot=3.7
 InpMaxMartLevel=0
 
 ; Frequency (M1: 2 bars cooldown -> ~107 trades/day)
