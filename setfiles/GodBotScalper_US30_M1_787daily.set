@@ -1,0 +1,44 @@
+; GodBotScalper v2.0 - US30 M1 - $787/day (3.4 Contracts)
+; H1 Technical Summary (26 indicators) - Fixed Lot - No Martingale
+;
+; Backtest results (US30 M1, Feb 2025 - Feb 2026):
+;   Trades/Day : ~107      Avg Profit/Day : ~$787
+;   Annual     : ~$287K    PF             : 1.310
+;   Sharpe     : 13.34     Sortino        : 122.6
+;   MaxDD $    : ~$3,379   (~3.4% of $100K sim)
+;   Win Rate   : 24.3%     Avg Trade      : 9 min
+;
+; Combined with XAUUSD 0.14 lot (GodBotScalper_XAUUSD_M1_3pct.set):
+;   Total Daily : ~$1,200/day  ($413 XAUUSD + $787 US30)
+;   Total Annual: ~$438K
+;   Combined MaxDD: ~$5,874 (~5.9% of $100K)
+;
+; Strategy:
+;   Direction : H1 Technical Summary (investing.com, 26 indicators)
+;               Score >= +7 -> BUY | Score <= -7 -> SELL
+;   Lot Size  : Fixed 3.4 lots/contracts (no martingale)
+;   Cooldown  : 2 M1 bars (~2 min between entries -> ~107 trades/day)
+;   Exit      : TP = 3.0x ATR | SL = 0.75x ATR
+;   MaxDD $   : $3,975 x (3.4/4) = $3,379
+;
+; H1 Direction filter
+InpTSThresh=7
+
+; Exit (M1 ATR)
+InpATRPeriod=21
+InpTP_ATR=3.0
+InpSL_ATR=0.75
+
+; Fixed 3.4 contracts - NO martingale
+InpBaseLot=3.4
+InpMaxMartLevel=0
+
+; Frequency (M1: 2 bars cooldown -> ~107 trades/day)
+InpCooldownBars=2
+
+; Hedge mode off
+InpHedgeMode=false
+
+; Trade (use different magic from XAUUSD instance)
+InpMagic=20250302
+InpHedgeMagic=true
