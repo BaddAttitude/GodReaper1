@@ -38,8 +38,8 @@ InpCooldownBars=4
 ; Hedge mode off
 InpHedgeMode=false
 
-; Session filter (US session only: 13:00-21:00 UTC = 09:00-17:00 EST)
-InpUseSession=true
+; Session filter disabled — off-hours US30 quality not significantly worse
+InpUseSession=false
 InpSessionStart=13
 InpSessionEnd=21
 

@@ -33,8 +33,8 @@ InpCooldownBars=4
 ; Hedge mode off
 InpHedgeMode=false
 
-; Session filter (London + NY: 07:00-20:00 UTC)
-InpUseSession=true
+; Session filter disabled for XAUUSD — Asian session quality is equal
+InpUseSession=false
 InpSessionStart=7
 InpSessionEnd=20
 
