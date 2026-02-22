@@ -1,4 +1,4 @@
-; GodBotScalper v2.1 - XAUUSD M1 - 3% MaxDD Config
+; GodBotScalper v2.0 - XAUUSD M1 - 3% MaxDD Config
 ; H1 Technical Summary (26 indicators) - Fixed Lot - No Martingale
 ;
 ; Backtest results (XAUUSD M1, Feb 2025 - Feb 2026, $100K account):
@@ -32,23 +32,6 @@ InpCooldownBars=4
 
 ; Hedge mode off
 InpHedgeMode=false
-
-; Session filter (London + NY: 07:00-20:00 UTC)
-InpUseSession=true
-InpSessionStart=7
-InpSessionEnd=20
-
-; Break-even stop (move SL to entry once 1x ATR in profit)
-InpUseBE=true
-InpBE_ATR=1.0
-
-; Daily loss limit ($500 circuit breaker)
-InpUseDDLimit=true
-InpMaxDailyLoss=500.0
-
-; Spread filter (max 15% of ATR)
-InpUseSpread=true
-InpMaxSpreadATR=0.15
 
 ; Trade
 InpMagic=20250301
