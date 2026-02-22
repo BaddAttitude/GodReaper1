@@ -1,6 +1,7 @@
 //+------------------------------------------------------------------+
 //| GodBotScalper.mq5                                                |
-//| GodBot Scalper v2.0 — H1 Tech Summary + Martingale + Hedge      |
+//| GodBot Scalper v2.1 — Session + Break-Even + Daily Limit +      |
+//|                        Spread Filter                             |
 //|                                                                  |
 //| Direction  : H1 Technical Summary (26 indicators — replicates   |
 //|              investing.com methodology)                          |
@@ -13,10 +14,12 @@
 //|              H1 score flips to Strong Sell/Buy (|score|>=15)    |
 //|              while primary trade is still open                   |
 //| Exit       : Fixed ATR R:R  TP=InpTP_ATR×ATR | SL=InpSL_ATR×ATR|
+//| v2.1 adds : Session filter, break-even stop, daily loss limit,  |
+//|              spread filter                                       |
 //+------------------------------------------------------------------+
 #property copyright "GodBot"
-#property version   "2.00"
-#property description "GodBot Scalper v2.0 — H1 Tech Summary + Martingale + Hedge"
+#property version   "2.10"
+#property description "GodBot Scalper v2.1 — Session + BE + Daily Limit + Spread Filter"
 
 #include <Trade\Trade.mqh>
 
@@ -42,6 +45,23 @@ input int    InpCooldownBars = 12;   // Min M1 bars between entries (~53/day)
 
 input group "=== Hedge Mode ==="
 input bool   InpHedgeMode    = false; // Open counter-position on Strong reversal
+
+input group "=== Session Filter ==="
+input bool   InpUseSession   = true;  // Only trade within session hours (UTC)
+input int    InpSessionStart = 7;     // Session open hour UTC (0-23)
+input int    InpSessionEnd   = 20;    // Session close hour UTC (0-23)
+
+input group "=== Break-Even Stop ==="
+input bool   InpUseBE        = true;  // Move SL to entry once in profit >= N×ATR
+input double InpBE_ATR       = 1.0;   // Profit threshold to trigger break-even (×ATR)
+
+input group "=== Daily Loss Limit ==="
+input bool   InpUseDDLimit   = true;    // Stop trading today if loss exceeds limit
+input double InpMaxDailyLoss = 500.0;   // Max allowed daily loss in account currency
+
+input group "=== Spread Filter ==="
+input bool   InpUseSpread    = true;   // Skip entry if spread is too wide
+input double InpMaxSpreadATR = 0.15;   // Max spread as fraction of ATR
 
 input group "=== Trade Settings ==="
 input ulong  InpMagic        = 20250301; // EA magic number
@@ -72,6 +92,57 @@ int      martLevel      = 0;   // current martingale level
 int      lastDir        = 0;   // +1 buy / -1 sell
 bool     paused         = false;
 
+// Daily loss tracking
+datetime todayDate    = 0;
+double   dailyPnL     = 0.0;
+bool     dailyStopped = false;
+
+
+//──────────────────────────────────────────────────────────────────
+// Break-Even: called every tick — moves SL to open price once
+//             trade profit reaches InpBE_ATR × ATR
+//──────────────────────────────────────────────────────────────────
+
+void CheckBreakEven()
+{
+    if(!InpUseBE) return;
+    double atrV[1]; ArraySetAsSeries(atrV, true);
+    if(CopyBuffer(hATR_M1, 0, 1, 1, atrV) < 1 || atrV[0] <= 0) return;
+    double atr = atrV[0];
+
+    for(int i = 0; i < PositionsTotal(); i++)
+    {
+        if(PositionGetSymbol(i) != _Symbol) continue;
+        if(PositionGetInteger(POSITION_MAGIC) != (long)InpMagic) continue;
+
+        ulong  ticket    = PositionGetInteger(POSITION_TICKET);
+        double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+        double curSL     = PositionGetDouble(POSITION_SL);
+        double curTP     = PositionGetDouble(POSITION_TP);
+        int    posType   = (int)PositionGetInteger(POSITION_TYPE);
+        double curPrice  = (posType == POSITION_TYPE_BUY)
+                           ? SymbolInfoDouble(_Symbol, SYMBOL_BID)
+                           : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+
+        double profit_pts = (posType == POSITION_TYPE_BUY)
+                            ? (curPrice - openPrice)
+                            : (openPrice - curPrice);
+
+        if(profit_pts >= InpBE_ATR * atr)
+        {
+            double newSL     = openPrice;
+            bool   needsMove = (posType == POSITION_TYPE_BUY)
+                               ? (curSL < newSL - _Point)
+                               : (curSL > newSL + _Point);
+            if(needsMove)
+            {
+                trade.PositionModify(ticket, newSL, curTP);
+                PrintFormat("BE | ticket=%llu | SL moved to open %.5f (profit=%.1f pts, ATR=%.5f)",
+                            ticket, newSL, profit_pts, atr);
+            }
+        }
+    }
+}
 
 //──────────────────────────────────────────────────────────────────
 // Helper: compute H1 Tech Summary score  (-24 to +24)
@@ -243,17 +314,23 @@ int OnInit()
     {
         if(handles[i] == INVALID_HANDLE)
         {
-            PrintFormat("GodBot Scalper v2.0: FAILED to create handle index %d", i);
+            PrintFormat("GodBot Scalper v2.1: FAILED to create handle index %d", i);
             return INIT_FAILED;
         }
     }
 
-    PrintFormat("GodBot Scalper v2.0 | %s M1 (H1 TS thresh=+/-%d) | "
+    PrintFormat("GodBot Scalper v2.1 | %s M1 (H1 TS thresh=+/-%d) | "
                 "BaseLot=%.2f | MaxMart=%d | CD=%d bars | "
-                "TP=%.1fx ATR | SL=%.1fx ATR | Hedge=%s",
+                "TP=%.1fx ATR | SL=%.1fx ATR | Hedge=%s | "
+                "Session=%s(%d-%d UTC) | BE=%s(%.1fx ATR) | "
+                "DailyLimit=%s($%.0f) | SpreadFilter=%s(%.2fx ATR)",
                 _Symbol, InpTSThresh, InpBaseLot, InpMaxMartLevel,
                 InpCooldownBars, InpTP_ATR, InpSL_ATR,
-                InpHedgeMode ? "ON" : "OFF");
+                InpHedgeMode ? "ON" : "OFF",
+                InpUseSession ? "ON" : "OFF", InpSessionStart, InpSessionEnd,
+                InpUseBE ? "ON" : "OFF", InpBE_ATR,
+                InpUseDDLimit ? "ON" : "OFF", InpMaxDailyLoss,
+                InpUseSpread ? "ON" : "OFF", InpMaxSpreadATR);
     return INIT_SUCCEEDED;
 }
 
@@ -291,6 +368,19 @@ void OnTradeTransaction(const MqlTradeTransaction &trans,
     double profit    = HistoryDealGetDouble (ticket, DEAL_PROFIT)
                      + HistoryDealGetDouble (ticket, DEAL_SWAP)
                      + HistoryDealGetDouble (ticket, DEAL_COMMISSION);
+
+    // Daily P&L tracking
+    MqlDateTime ddt; TimeToStruct(TimeCurrent(), ddt);
+    datetime today = StringToTime(StringFormat("%04d.%02d.%02d", ddt.year, ddt.mon, ddt.day));
+    if(today != todayDate) { todayDate = today; dailyPnL = 0.0; dailyStopped = false; }
+    dailyPnL += profit;
+    if(InpUseDDLimit && dailyPnL < -InpMaxDailyLoss && !dailyStopped)
+    {
+        dailyStopped = true;
+        PrintFormat("DAILY LOSS LIMIT hit: daily P&L=%.2f < -%.2f. No new trades today.",
+                    dailyPnL, InpMaxDailyLoss);
+    }
+
     long   deal_type = HistoryDealGetInteger(ticket, DEAL_TYPE);
     int    closedDir = (deal_type == DEAL_TYPE_SELL) ? 1 : -1;
 
@@ -344,11 +434,26 @@ int GetOpenPositionType(ulong magic)
 
 void OnTick()
 {
+    CheckBreakEven();   // runs every tick — manages BE stop for open positions
+
     datetime curBar = iTime(_Symbol, PERIOD_M1, 0);
     if(curBar == lastBar) return;
     lastBar = curBar;
 
     if(paused) return;
+
+    // Reset daily tracker on new day; stop if limit hit
+    MqlDateTime ndt; TimeToStruct(TimeCurrent(), ndt);
+    datetime today = StringToTime(StringFormat("%04d.%02d.%02d", ndt.year, ndt.mon, ndt.day));
+    if(today != todayDate) { todayDate = today; dailyPnL = 0.0; dailyStopped = false; }
+    if(dailyStopped) return;
+
+    // Session time filter
+    if(InpUseSession)
+    {
+        MqlDateTime utc; TimeToStruct(TimeGMT(), utc);
+        if(utc.hour < InpSessionStart || utc.hour >= InpSessionEnd) return;
+    }
 
     int  tsScore = ComputeH1TechSummary();
     bool bull    = tsScore >= InpTSThresh;
@@ -401,6 +506,14 @@ void OnTick()
     double atrV[1]; ArraySetAsSeries(atrV, true);
     if(CopyBuffer(hATR_M1, 0, 1, 1, atrV) < 1 || atrV[0] <= 0) return;
     double atr = atrV[0];
+
+    // Spread filter — skip entry if spread is too wide vs ATR
+    if(InpUseSpread)
+    {
+        double spread = SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                      - SymbolInfoDouble(_Symbol, SYMBOL_BID);
+        if(spread > InpMaxSpreadATR * atr) return;
+    }
 
     double lot     = InpBaseLot * MathPow(2.0, martLevel);
     double lotStep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
