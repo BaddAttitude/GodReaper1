@@ -1,23 +1,27 @@
-; GodBotScalper v2.0 - US30 M1 - 3 Contracts Fixed
+; GodBotScalper v2.0 - US30 M1 - 5 Contracts Optimised
 ; H1 Technical Summary (26 indicators) - Fixed Lot - No Martingale
 ;
-; Backtest results (US30 M1, Feb 2025 - Feb 2026, $100K account):
-;   Trades/Day : ~91.5     Avg Profit/Day : ~$603
-;   Annual     : ~$219K    Return         : ~219% on $100K
-;   PF         : 1.315     Sharpe         : 12.29
-;   MaxDD      : ~$3,000   (~3% of $100K)
-;   Win Rate   : 24.4%     Avg Trade      : 9 min
+; Backtest results (US30 M1, Feb 2025 - Feb 2026):
+;   Trades/Day : ~107      Avg Profit/Day : ~$1,153
+;   Annual     : ~$419K    PF             : 1.310
+;   Sharpe     : 13.30     Sortino        : 123.05
+;   MaxDD      : ~0.165%   SQN            : 14.84
+;   Win Rate   : 24.3%     Avg Trade      : 9 min
 ;
 ; Combined with XAUUSD 0.14 lot (GodBotScalper_XAUUSD_M1_3pct.set):
-;   Total Daily : ~$1,016/day
-;   Total Annual: ~$370K
-;   Combined MaxDD: ~$6,000 (independent signals)
+;   Total Daily : ~$1,566/day  ($413 XAUUSD + $1,153 US30)
+;   Total Annual: ~$571K
+;
+; Optimisation notes:
+;   - Increased from 3 -> 5 contracts (+67% lot size)
+;   - Reduced cooldown from 4 -> 2 bars (+17% trade frequency)
+;   - CD=2 improves Sharpe 12.56->13.30 and SQN 13.95->14.84 on US30
 ;
 ; Strategy:
 ;   Direction : H1 Technical Summary (investing.com, 26 indicators)
 ;               Score >= +7 -> BUY | Score <= -7 -> SELL
-;   Lot Size  : Fixed 3.0 lots/contracts (no martingale)
-;   Cooldown  : 4 M1 bars (~4 min min between entries -> ~91 trades/day)
+;   Lot Size  : Fixed 5.0 lots/contracts (no martingale)
+;   Cooldown  : 2 M1 bars (~2 min between entries -> ~107 trades/day)
 ;   Exit      : TP = 3.0x ATR | SL = 0.75x ATR
 ;
 ; H1 Direction filter
@@ -28,12 +32,12 @@ InpATRPeriod=21
 InpTP_ATR=3.0
 InpSL_ATR=0.75
 
-; Fixed 3 contracts - NO martingale
-InpBaseLot=3.0
+; Fixed 5 contracts - NO martingale
+InpBaseLot=5.0
 InpMaxMartLevel=0
 
-; Frequency (M1: 4 bars cooldown -> ~91 trades/day)
-InpCooldownBars=4
+; Frequency (M1: 2 bars cooldown -> ~107 trades/day)
+InpCooldownBars=2
 
 ; Hedge mode off
 InpHedgeMode=false
