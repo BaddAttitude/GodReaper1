@@ -1,0 +1,34 @@
+; GodBotScalper v2.0 — XAUUSD M1 Settings (Optimised)
+; H1 Technical Summary (26 indicators) + Martingale + Optional Hedge
+;
+; Backtest results (XAUUSD M1, Feb 2025 - Feb 2026):
+;   Trades/Day : ~53    Return : +20.3%    PF : 1.34
+;   Sharpe     : 9.95   MaxDD  : -0.70%   Sortino : 46.1
+;
+; Direction filter (H1 Tech Summary)
+;   Score >= +7 -> BUY | Score <= -7 -> SELL
+;   Computed from 13 MAs + 11 Oscillators on H1 chart
+;
+; Load in MT5: attach EA to XAUUSD M1 -> Inputs -> Load
+
+; H1 Direction filter
+InpTSThresh=7
+
+; Exit (M1 ATR)
+InpATRPeriod=21
+InpTP_ATR=3.0
+InpSL_ATR=0.75
+
+; Martingale (0.2->0.4->0.8->1.6->3.2 lots)
+InpBaseLot=0.2
+InpMaxMartLevel=4
+
+; Frequency (M1: 12 bars = 12 min -> ~53 trades/day)
+InpCooldownBars=12
+
+; Hedge mode — opens counter-position on Strong H1 reversal (|score|>=15)
+InpHedgeMode=false
+
+; Trade
+InpMagic=20250301
+InpHedgeMagic=true

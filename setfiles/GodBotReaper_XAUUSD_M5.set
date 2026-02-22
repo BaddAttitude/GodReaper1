@@ -1,0 +1,28 @@
+; GodBotReaper v1.0 — XAUUSD M5 Settings
+; Based on PipTrend Forexter2 "5min xauusd" config
+; Load this file in MT5: EA Inputs → Load
+
+InpStopTradePct=10.0
+InpMaxDDPct=2.0
+InpMaxSpread=50.0
+InpMAPeriod=100
+InpMADistance=15.0
+InpRSITF=5
+InpRSIPeriod=14
+InpRSIMALen=10
+InpLot=0.2
+InpAutoCal=true
+InpATRTF=7
+InpATRPeriods=21
+InpGAF=1.5
+InpMinStep=25.0
+InpMaxTrades=5
+InpBEAtCount=3
+InpBEOffset=2.0
+InpForceCloseOld=true
+InpCloseOldAt=4
+InpCloseOldMinPts=10.0
+InpProfitTarget=50.0
+InpRatchetTP=true
+InpRatchetStep=10.0
+InpRatchetMax=3

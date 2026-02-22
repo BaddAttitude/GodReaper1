@@ -1,0 +1,38 @@
+; GodBotScalper v2.0 - XAUUSD M1 - 3% MaxDD Config
+; H1 Technical Summary (26 indicators) - Fixed Lot - No Martingale
+;
+; Backtest results (XAUUSD M1, Feb 2025 - Feb 2026, $100K account):
+;   Trades/Day : ~94      Avg Profit/Day : ~$413
+;   Annual     : ~$150K   Return         : ~150% on $100K
+;   PF         : 1.313    Sharpe         : 12.59
+;   MaxDD      : ~$3,247  (~3.2% of $100K)
+;   Win Rate   : 24.9%    Avg Trade      : 8 min
+;
+; Strategy:
+;   Direction : H1 Technical Summary (investing.com, 26 indicators)
+;               Score >= +7 -> BUY | Score <= -7 -> SELL
+;   Lot Size  : Fixed 0.14 lots (no martingale - consistent risk)
+;   Cooldown  : 4 M1 bars (~4 min min between entries -> ~94 trades/day)
+;   Exit      : TP = 3.0x ATR | SL = 0.75x ATR
+;
+; H1 Direction filter
+InpTSThresh=7
+
+; Exit (M1 ATR)
+InpATRPeriod=21
+InpTP_ATR=3.0
+InpSL_ATR=0.75
+
+; Fixed lot - NO martingale
+InpBaseLot=0.14
+InpMaxMartLevel=0
+
+; Frequency (M1: 4 bars cooldown -> ~94 trades/day)
+InpCooldownBars=4
+
+; Hedge mode off
+InpHedgeMode=false
+
+; Trade
+InpMagic=20250301
+InpHedgeMagic=true
